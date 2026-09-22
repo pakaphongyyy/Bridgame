@@ -1,66 +1,128 @@
-# Bird Game Starter
+การแบ่งความรับผิดชอบสำหรับสมาชิก 5 คน
 
-Java Swing starter project based on the agreed game architecture.
+เพื่อให้สมาชิกสามารถพัฒนาโปรเจกต์พร้อมกันได้โดยลดปัญหาการแก้ไฟล์ชนกัน จะแบ่งงานออกเป็น 5 ส่วนหลักดังนี้
 
-## Current rules already coded
+คนที่ 1 — ระบบหน้าจอและเมนูเกม
+รับผิดชอบ
 
-- Main -> StartFrame -> PlayerSetupFrame -> GameFrame -> ResultFrame
-- Players can be created with names.
-- Hearts are counted per level and reset on level change.
-- Heart requirements:
-  - Level 1 = 10
-  - Level 2 = 15
-  - Level 3 = 20
-  - Level 4 = 25
-- Passed pipes accumulate across all levels and do not reset.
-- Level 5 is reserved for the ending scene where the bird flies to the nest.
-- Ranking:
-  1. Players who reached the nest first, ordered by finish order.
-  2. Unfinished players follow, ordered by highest level.
-  3. If same level, higher total pipes wins.
-  4. If still tied, earlier play order wins.
+ดูแลส่วนติดต่อผู้ใช้ หรือ UI (User Interface) ตั้งแต่หน้าเริ่มเกมจนถึงหน้าสรุปผล
 
-## Test controls in this starter
+ไฟล์ที่รับผิดชอบหลัก
+StartFrame.java
+PlayerSetupFrame.java
+ResultFrame.java
+AppFont.java
+งานที่ต้องทำ
+ออกแบบหน้า Start Menu
+สร้างช่องกรอกชื่อผู้เล่น
+สร้างปุ่มเริ่มเกม
+แสดงประวัติผู้เล่นก่อนหน้า
+สร้างหน้าสรุปผลหลังจบเกม
+สร้างปุ่มสำหรับผู้เล่นคนถัดไป
+ดูแลฟอนต์ภาษาไทย
+จัด Layout สี ปุ่ม และรูปแบบหน้าจอให้สวยงาม
+เป้าหมายของงาน
 
-This starter first verifies the game rules before real physics is added.
+ผู้ใช้สามารถเปิดโปรแกรม กรอกชื่อ เริ่มเกม และดูผลหลังจบเกมได้อย่างสมบูรณ์
 
-- H = collect a heart
-- P = pass one pipe pair
-- X = collide / lose current turn
-- N = finish by reaching the nest (only on level 5)
+คนที่ 2 — ระบบนกและการควบคุม
+รับผิดชอบ
 
-## Run in VS Code
+ดูแลตัวละครนก การเคลื่อนไหว และระบบควบคุม
 
-1. Open this folder in VS Code.
-2. Make sure Extension Pack for Java is installed.
-3. Open `src/birdgame/Main.java`.
-4. Press Run / F5.
+ไฟล์ที่รับผิดชอบหลัก
+Bird.java
+GamePanel.java
+งานที่ต้องทำ
+กำหนดตำแหน่ง X และ Y ของนก
+ทำระบบแรงโน้มถ่วง (Gravity)
+ทำระบบกระโดดหรือบินขึ้น
+รับคำสั่งจาก Keyboard
+กำหนดความเร็วในการตก
+วาดนกบนหน้าจอ
+เพิ่มภาพกราฟิกหรือ Animation ของนก
+ทำฉากนกบินเข้ารังในด่าน 5
+เป้าหมายของงาน
 
-Next step: replace test controls with actual bird physics, moving pipes, hearts, collisions, and the final nest animation.
+ผู้เล่นสามารถควบคุมนกให้บินขึ้นและตกลงได้อย่างเป็นธรรมชาติ
 
+คนที่ 3 — ระบบท่อ หัวใจ รัง และ Collision
+รับผิดชอบ
 
-## Thai font fix
+ดูแลวัตถุภายในเกม และตรวจสอบการชนทั้งหมด
 
-The project now automatically selects an installed font that supports Thai, preferring:
+ไฟล์ที่รับผิดชอบหลัก
+Pipe.java
+Heart.java
+Nest.java
+CollisionService.java
+งานที่ต้องทำ
+สร้างท่อจากด้านขวาของหน้าจอ
+เลื่อนท่อจากขวาไปซ้าย
+สุ่มตำแหน่งช่องว่างระหว่างท่อ
+สร้างหัวใจในตำแหน่งต่าง ๆ
+ตรวจการชนระหว่างนกกับท่อ
+ตรวจการชนพื้น
+ตรวจว่านกเก็บหัวใจหรือไม่
+ตรวจว่านกถึงรังหรือไม่
+กำหนด Hitbox ของนก ท่อ หัวใจ และรัง
+เป้าหมายของงาน
 
-1. Tahoma
-2. Leelawadee UI
-3. Noto Sans Thai
-4. Noto Sans
-5. Arial
-6. Dialog
+วัตถุในเกมเคลื่อนที่ได้ และระบบตรวจการชนหรือเก็บไอเทมได้ถูกต้อง
 
-VS Code and the Java runtime are also configured to use UTF-8.
+คนที่ 4 — ระบบด่าน คะแนน และกติกาเกม
+รับผิดชอบ
 
+ดูแล Game Logic หรือกติกาหลักทั้งหมดของเกม
 
-## Single-player flow with saved history
+ไฟล์ที่รับผิดชอบหลัก
+GameEngine.java
+GameState.java
+LevelConfig.java
+LevelService.java
+ScoreService.java
+Player.java
+งานที่ต้องทำ
+ควบคุม Game Loop
+เพิ่มจำนวนหัวใจเมื่อผู้เล่นเก็บได้
+เพิ่มจำนวนท่อเมื่อผู้เล่นบินผ่าน
+ตรวจสอบเงื่อนไขผ่านด่าน
+รีเซตหัวใจเมื่อเข้าสู่ด่านใหม่
+เก็บจำนวนท่อสะสมโดยไม่รีเซต
+เปลี่ยนความยากของแต่ละด่าน
+จัดการสถานะ Game Over
+จัดการด่าน 5 และฉากจบ
+เชื่อมข้อมูลระหว่าง Player, GameState และ GamePanel
+กติกาที่ต้องควบคุม
+ด่าน 1 = 10 หัวใจ
+ด่าน 2 = 15 หัวใจ
+ด่าน 3 = 20 หัวใจ
+ด่าน 4 = 25 หัวใจ
+ด่าน 5 = บินเข้ารัง
+เป้าหมายของงาน
 
-The game now runs one player at a time:
+ระบบสามารถนับคะแนน เปลี่ยนด่าน และตรวจเงื่อนไขจบเกมได้ถูกต้อง
 
-Main -> StartFrame -> PlayerSetupFrame -> GameFrame -> ResultFrame
+คนที่ 5 — ระบบบันทึกข้อมูล ทดสอบ และรวมระบบ
+รับผิดชอบ
 
-- Only one player name is entered before each game.
-- When that player's turn ends, the result is appended to `data/player_history.csv`.
-- Previous player records remain available after restarting the application.
-- `ResultFrame` displays the saved history and has a "ผู้เล่นคนถัดไป" button.
-- Each play is stored as a separate record. If the same name plays again, another record is added.
+ดูแลข้อมูลผู้เล่น การบันทึกประวัติ การรวมโค้ด และตรวจสอบความสมบูรณ์ของโปรเจกต์
+
+ไฟล์ที่รับผิดชอบหลัก
+FileStorageService.java
+PlayerRecord.java
+Main.java
+GameFrame.java
+งานที่ต้องทำ
+บันทึกข้อมูลผู้เล่นลงไฟล์ CSV
+โหลดประวัติผู้เล่นเดิมกลับมาแสดง
+ตรวจว่าปิดโปรแกรมแล้วข้อมูลยังอยู่
+เชื่อม GameFrame กับระบบบันทึกข้อมูล
+ตรวจสอบการจบเกมและบันทึกผล
+รวมโค้ดจากสมาชิกทุกคน
+แก้ Error หลัง Merge
+ทดสอบโปรแกรมตั้งแต่เริ่มจนจบ
+ดูแล GitHub Repository และ Pull Request
+เป้าหมายของงาน
+
+ข้อมูลผู้เล่นถูกบันทึกอย่างถูกต้อง และโค้ดจากทั้ง 5 ส่วนสามารถทำงานร่วมกันได้
