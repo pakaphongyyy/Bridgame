@@ -7,17 +7,23 @@ public class Bird {
     private boolean alive = true;
     private boolean flyingToNest = false;
 
+    private static final double GRAVITY = 0.45;
+    private static final double JUMP_POWER = -7.5;
+
     public Bird(int x, int y) {
         this.x = x;
         this.y = y;
+        this.velocityY = 0;
     }
 
     public void jump() {
-        velocityY = -7.5;
+        if (!alive) return;
+        velocityY = JUMP_POWER;
     }
 
     public void update() {
-        velocityY += 0.45;
+        if (!alive) return;
+        velocityY += GRAVITY;
         y += (int) velocityY;
     }
 
@@ -41,6 +47,10 @@ public class Bird {
 
     public void setPosition(int x, int y) {
         this.x = x;
+        this.y = y;
+    }
+
+    public void setY(int y) {
         this.y = y;
     }
 }

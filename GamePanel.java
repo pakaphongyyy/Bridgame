@@ -1,17 +1,17 @@
 package birdgame.ui;
 
+import birdgame.model.Bird;
 import birdgame.model.Player;
 import birdgame.service.GameEngine;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
 
 public class GamePanel extends JPanel {
+
     private final Player player;
     private final GameEngine gameEngine;
-
     private final Runnable onLose;
     private final Runnable onWin;
 
@@ -19,6 +19,13 @@ public class GamePanel extends JPanel {
     private final JLabel levelLabel = new JLabel();
     private final JLabel heartLabel = new JLabel();
     private final JLabel pipeLabel = new JLabel();
+
+    private Timer gameTimer;
+    private boolean turnEnded = false;
+
+    private static final int BIRD_WIDTH = 50;
+    private static final int BIRD_HEIGHT = 40;
+    private static final int GROUND_HEIGHT = 70;
 
     public GamePanel(Player player, Runnable onLose, Runnable onWin) {
         this.player = player;
@@ -31,10 +38,11 @@ public class GamePanel extends JPanel {
         setBackground(new Color(232, 247, 255));
 
         buildUI();
-        bindKeys();
+        bindSpaceBar();
 
         gameEngine.startGame();
         updateStatus();
+        startGameLoop();
     }
 
     private void buildUI() {
@@ -44,82 +52,129 @@ public class GamePanel extends JPanel {
         hud.add(heartLabel);
         hud.add(pipeLabel);
 
-        JPanel center = new JPanel() {
+        JPanel gameArea = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
 
-                int w = getWidth();
-                int h = getHeight();
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                );
 
-                g.setColor(new Color(160, 220, 255));
-                g.fillRect(0, 0, w, h);
+                int width = getWidth();
+                int height = getHeight();
 
-                g.setColor(new Color(80, 180, 90));
-                g.fillRect(0, h - 70, w, 70);
+                // Background
+                g2.setColor(new Color(160, 220, 255));
+                g2.fillRect(0, 0, width, height);
 
-                g.setColor(Color.YELLOW);
-                g.fillOval(120, h / 2 - 20, 40, 40);
+                // Ground
+                g2.setColor(new Color(80, 180, 90));
+                g2.fillRect(0, height - GROUND_HEIGHT, width, GROUND_HEIGHT);
 
-                g.setColor(Color.DARK_GRAY);
-                g.setFont(AppFont.bold(20));
+                // Bird
+                Bird bird = gameEngine.getGameState().getBird();
+                int birdX = bird.getX();
+                int birdY = bird.getY();
 
-                if (player.getCurrentLevel() < 5) {
-                    g.drawString("ขั้นทดสอบ Logic", 330, h / 2 - 40);
-                    g.drawString("H = เก็บหัวใจ   P = ผ่านท่อ   X = ชนท่อ/แพ้", 220, h / 2);
-                } else {
-                    g.drawString("LEVEL 5 - ENDING SCENE", 300, h / 2 - 30);
-                    g.drawString("กด N เพื่อทดสอบนกบินเข้ารังและจบเกม", 255, h / 2 + 10);
-                }
+                g2.setColor(Color.YELLOW);
+                g2.fillOval(birdX, birdY, BIRD_WIDTH, BIRD_HEIGHT);
+
+                g2.setColor(Color.BLACK);
+                g2.fillOval(birdX + 34, birdY + 9, 6, 6);
+
+                g2.setColor(Color.ORANGE);
+                int[] xPoints = { birdX + 47, birdX + 62, birdX + 47 };
+                int[] yPoints = { birdY + 17, birdY + 22, birdY + 27 };
+                g2.fillPolygon(xPoints, yPoints, 3);
+
+                g2.setColor(Color.DARK_GRAY);
+                g2.setFont(AppFont.bold(20));
+                g2.drawString("กด SPACEBAR เพื่อให้นกบิน", 280, 55);
+
+                g2.dispose();
             }
         };
 
-        center.setBackground(Color.WHITE);
+        putClientProperty("gameArea", gameArea);
 
-        JLabel help = new JLabel(
-            "เวอร์ชันเริ่มต้น: ใช้ H / P / X เพื่อทดสอบกติกา ก่อนต่อระบบฟิสิกส์และ Collision จริง",
-            SwingConstants.CENTER
-        );
+        JLabel help = new JLabel("SPACE = บินขึ้น", SwingConstants.CENTER);
         help.setBorder(BorderFactory.createEmptyBorder(8, 8, 12, 8));
 
         add(hud, BorderLayout.NORTH);
-        add(center, BorderLayout.CENTER);
+        add(gameArea, BorderLayout.CENTER);
         add(help, BorderLayout.SOUTH);
     }
 
-    private void bindKeys() {
-        addKeyListener(new KeyAdapter() {
+    private void bindSpaceBar() {
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        inputMap.put(KeyStroke.getKeyStroke("SPACE"), "birdJump");
+
+        actionMap.put("birdJump", new AbstractAction() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_H -> {
-                        gameEngine.collectHeartForTest();
-                        updateStatus();
-                        repaint();
-                    }
-                    case KeyEvent.VK_P -> {
-                        gameEngine.passPipeForTest();
-                        updateStatus();
-                    }
-                    case KeyEvent.VK_X -> {
-                        JOptionPane.showMessageDialog(
-                            GamePanel.this,
-                            player.getName() + " ชนท่อ / จบรอบ"
-                        );
-                        onLose.run();
-                    }
-                    case KeyEvent.VK_N -> {
-                        if (player.getCurrentLevel() == 5) {
-                            JOptionPane.showMessageDialog(
-                                GamePanel.this,
-                                player.getName() + " บินเข้ารังสำเร็จ!"
-                            );
-                            onWin.run();
-                        }
-                    }
-                }
+            public void actionPerformed(ActionEvent e) {
+                if (turnEnded) return;
+
+                Bird bird = gameEngine.getGameState().getBird();
+                bird.jump();
+                repaintGameArea();
             }
         });
+    }
+
+    private void startGameLoop() {
+        gameTimer = new Timer(16, e -> updateGame());
+        gameTimer.start();
+    }
+
+    private void updateGame() {
+        if (turnEnded) return;
+
+        Bird bird = gameEngine.getGameState().getBird();
+
+        // Gravity + movement
+        bird.update();
+
+        // ไม่ให้นกทะลุขอบบน
+        if (bird.getY() < 0) {
+            bird.setY(0);
+        }
+
+        // ตรวจว่าตกถึงพื้นหรือยัง
+        JPanel gameArea = getGameArea();
+
+        if (gameArea != null) {
+            int groundY = gameArea.getHeight() - GROUND_HEIGHT - BIRD_HEIGHT;
+
+            if (bird.getY() >= groundY) {
+                bird.setY(Math.max(0, groundY));
+                gameOver();
+            }
+        }
+
+        updateStatus();
+        repaintGameArea();
+    }
+
+    private void gameOver() {
+        if (turnEnded) return;
+
+        turnEnded = true;
+
+        if (gameTimer != null) {
+            gameTimer.stop();
+        }
+
+        JOptionPane.showMessageDialog(
+                this,
+                player.getName() + " ตกถึงพื้น! จบรอบ"
+        );
+
+        onLose.run();
     }
 
     private void updateStatus() {
@@ -127,5 +182,37 @@ public class GamePanel extends JPanel {
         levelLabel.setText("ด่าน: " + player.getCurrentLevel());
         heartLabel.setText("หัวใจ: " + gameEngine.getHeartDisplay());
         pipeLabel.setText("ท่อสะสม: " + player.getTotalPipes());
+    }
+
+    private JPanel getGameArea() {
+        Object value = getClientProperty("gameArea");
+
+        if (value instanceof JPanel) {
+            return (JPanel) value;
+        }
+
+        return null;
+    }
+
+    private void repaintGameArea() {
+        JPanel gameArea = getGameArea();
+
+        if (gameArea != null) {
+            gameArea.repaint();
+        } else {
+            repaint();
+        }
+    }
+
+    public void finishAtNest() {
+        if (turnEnded) return;
+
+        turnEnded = true;
+
+        if (gameTimer != null) {
+            gameTimer.stop();
+        }
+
+        onWin.run();
     }
 }
