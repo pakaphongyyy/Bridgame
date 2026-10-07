@@ -1,6 +1,9 @@
 package birdgame.ui;
 
+import birdgame.model.Heart;
+import birdgame.model.Pipe;
 import birdgame.model.Player;
+import birdgame.service.CollisionService;
 import birdgame.service.GameEngine;
 
 import javax.swing.*;
@@ -19,6 +22,7 @@ public class GamePanel extends JPanel {
     private final JLabel levelLabel = new JLabel();
     private final JLabel heartLabel = new JLabel();
     private final JLabel pipeLabel = new JLabel();
+    private JPanel center;   // เพิ่ม: Timer ต้องใช้ขนาดจอ
 
     public GamePanel(Player player, Runnable onLose, Runnable onWin) {
         this.player = player;
@@ -35,6 +39,13 @@ public class GamePanel extends JPanel {
 
         gameEngine.startGame();
         updateStatus();
+
+        // ===== เพิ่ม: game loop ~60 ครั้ง/วินาที =====
+        new Timer(16, e -> {
+            if (center.getWidth() == 0) return;     // ยังไม่ได้วาดจอครั้งแรก
+            gameEngine.update(center.getWidth(), center.getHeight());
+            center.repaint();
+        }).start();
     }
 
     private void buildUI() {
@@ -44,7 +55,7 @@ public class GamePanel extends JPanel {
         hud.add(heartLabel);
         hud.add(pipeLabel);
 
-        JPanel center = new JPanel() {
+        center = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -55,11 +66,16 @@ public class GamePanel extends JPanel {
                 g.setColor(new Color(160, 220, 255));
                 g.fillRect(0, 0, w, h);
 
-                g.setColor(new Color(80, 180, 90));
-                g.fillRect(0, h - 70, w, 70);
+                // ===== เพิ่ม: วาดท่อ หัวใจ รัง (ก่อนพื้น) =====
+                var state = gameEngine.getGameState();
+                for (Pipe pipe : state.getPipes()) pipe.draw(g);
+                for (Heart heart : state.getHearts()) heart.draw(g);
+                if (state.getNest() != null) state.getNest().draw(g);
 
-                g.setColor(Color.YELLOW);
-                g.fillOval(120, h / 2 - 20, 40, 40);
+                g.setColor(new Color(80, 180, 90));
+                g.fillRect(0, h - CollisionService.GROUND_HEIGHT, w, CollisionService.GROUND_HEIGHT);
+
+                // ลบ: วงกลมเหลือง (นก) — ยังไม่ใช้นก
 
                 g.setColor(Color.DARK_GRAY);
                 g.setFont(AppFont.bold(20));
