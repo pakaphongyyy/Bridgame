@@ -2,6 +2,7 @@ package birdgame.ui;
 
 import birdgame.model.Heart;
 import birdgame.model.Pipe;
+import birdgame.model.Bird; //เรียกให้นกจากเกมเอนจิ้น
 import birdgame.model.Player;
 import birdgame.service.CollisionService;
 import birdgame.service.GameEngine;
@@ -70,6 +71,13 @@ public class GamePanel extends JPanel {
                 var state = gameEngine.getGameState();
                 for (Pipe pipe : state.getPipes()) pipe.draw(g);
                 for (Heart heart : state.getHearts()) heart.draw(g);
+
+                // ใฟ้นกมาเเสดงบนเกม
+            Bird bird = gameEngine.getBird();
+
+            if (bird.isAlive()) {
+             bird.draw(g);
+                }
                 if (state.getNest() != null) state.getNest().draw(g);
 
                 g.setColor(new Color(80, 180, 90));
@@ -102,8 +110,21 @@ public class GamePanel extends JPanel {
         add(center, BorderLayout.CENTER);
         add(help, BorderLayout.SOUTH);
     }
-
+        //กดสเปสนกบิน
     private void bindKeys() {
+
+     getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+        KeyStroke.getKeyStroke("SPACE"),
+        "jump");
+     getActionMap().put("jump", new javax.swing.AbstractAction() {
+    public void actionPerformed(java.awt.event.ActionEvent e) {
+        gameEngine.getBird().jump();
+}
+    });
+
+
+
+        
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -131,12 +152,16 @@ public class GamePanel extends JPanel {
                                 player.getName() + " บินเข้ารังสำเร็จ!"
                             );
                             onWin.run();
+                            
                         }
+                        
                     }
                 }
             }
         });
+        
     }
+    
 
     private void updateStatus() {
         playerLabel.setText("ผู้เล่น: " + player.getName());

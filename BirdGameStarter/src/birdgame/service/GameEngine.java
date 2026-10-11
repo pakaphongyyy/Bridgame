@@ -1,16 +1,21 @@
 package birdgame.service;
 
 import birdgame.model.GameState;
+import birdgame.model.Bird;
 import birdgame.model.Heart;
 import birdgame.model.LevelConfig;
 import birdgame.model.Nest;
 import birdgame.model.Pipe;
 import birdgame.model.Player;
 
+
+
 public class GameEngine {
     private final GameState gameState;
     private final ScoreService scoreService = new ScoreService();
     private final LevelService levelService = new LevelService();
+    private final CollisionService collisionService = new CollisionService();
+    private final Bird bird = new Bird(120, 200); //สร้างนก
 
     // ===== เพิ่ม: ท่อ / หัวใจ / รัง =====
     private static final int PIPE_SPEED = 3;       // px ต่อเฟรม
@@ -48,7 +53,35 @@ public class GameEngine {
     public void update(int panelWidth, int panelHeight) {
         int ground = CollisionService.GROUND_HEIGHT;
         tick++;
+        
+            // เช็คการชน
+            if (bird.isAlive()) {
+                bird.update();
 
+            // เช็คหัวใจ
+        for (Heart heart : gameState.getHearts()) {
+            if (collisionService.checkBirdHeart(bird, heart)) {
+            scoreService.collectHeart(
+                    gameState.getCurrentPlayer()
+            );
+            }
+        }
+
+            // เช็คท่อ
+        for (Pipe pipe : gameState.getPipes()) {
+            if (collisionService.checkBirdPipe(bird, pipe)) {
+                return;
+            }
+        }
+
+            // เช็คตกแมพ
+            if (collisionService.checkBirdGround(bird, panelHeight)) {
+                return;
+            }
+        }
+        
+
+    
         if (gameState.getCurrentPlayer().getCurrentLevel() == 5) {
             // ด่าน 5: ไม่มีท่อ มีรังเลื่อนเข้ามา
             if (gameState.getNest() == null) {
@@ -72,6 +105,9 @@ public class GameEngine {
     public GameState getGameState() {
         return gameState;
     }
+
+    public Bird getBird() {
+    return bird; }
 
     public String getHeartDisplay() {
         Player player = gameState.getCurrentPlayer();
