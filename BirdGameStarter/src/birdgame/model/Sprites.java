@@ -10,6 +10,8 @@ final class Sprites {
     static final BufferedImage PIPE_CAP = load("pipe_cap.png");
     static final BufferedImage HEART = load("heart.png");
     static final BufferedImage NEST = load("nest.png");
+    static final BufferedImage BIRD = load("bird.png");
+    
 
     private Sprites() {}
 
