@@ -102,9 +102,9 @@ public class GamePanel extends JPanel {
                 int w = getWidth();
                 int h = getHeight();
 
-                // ท้องฟ้า
-                g.setColor(new Color(160, 220, 255));
-                g.fillRect(0, 0, w, h);
+                // พื้นหลังเปลี่ยนตามด่าน
+                int level = player.getCurrentLevel();
+                drawLevelBackground(g, w, h, level);
 
                 var state = gameEngine.getGameState();
 
@@ -126,14 +126,8 @@ public class GamePanel extends JPanel {
                     bird.draw(g);
                 }
 
-                // พื้น
-                g.setColor(new Color(80, 180, 90));
-                g.fillRect(
-                    0,
-                    h - CollisionService.GROUND_HEIGHT,
-                    w,
-                    CollisionService.GROUND_HEIGHT
-                );
+                // พื้นของแต่ละด่านใช้สีต่างกัน แต่ความสูงเดิม
+                drawLevelGround(g, w, h, level);
 
                 if (!gameStarted) {
                     drawReadyOverlay(g, w, h);
@@ -161,6 +155,174 @@ public class GamePanel extends JPanel {
         add(hud, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         add(help, BorderLayout.SOUTH);
+    }
+
+
+    /** วาดพื้นหลังให้แต่ละด่านมีบรรยากาศต่างกัน โดยไม่กระทบ Game Logic */
+    private void drawLevelBackground(Graphics g, int w, int h, int level) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int groundY = h - CollisionService.GROUND_HEIGHT;
+
+        switch (level) {
+            case 1 -> {
+                // DAY SKY - ด่านเริ่มต้น สดใส
+                g2.setColor(new Color(156, 222, 255));
+                g2.fillRect(0, 0, w, h);
+                drawSun(g2, w - 115, 70, new Color(255, 224, 92));
+                drawCloud(g2, 90, 95, 1.0, new Color(250, 255, 255));
+                drawCloud(g2, 520, 150, 0.75, new Color(250, 255, 255));
+                drawHills(g2, w, groundY, new Color(126, 202, 122), new Color(91, 181, 102));
+            }
+            case 2 -> {
+                // SUNSET - สีส้มชมพู
+                GradientPaint sunset = new GradientPaint(
+                    0, 0, new Color(247, 146, 111),
+                    0, groundY, new Color(255, 211, 137)
+                );
+                g2.setPaint(sunset);
+                g2.fillRect(0, 0, w, h);
+                drawSun(g2, w - 150, 105, new Color(255, 241, 167));
+                drawCloud(g2, 100, 110, 0.9, new Color(255, 225, 214));
+                drawCloud(g2, 560, 180, 0.7, new Color(255, 220, 205));
+                drawHills(g2, w, groundY, new Color(181, 153, 117), new Color(144, 132, 96));
+            }
+            case 3 -> {
+                // NIGHT - กลางคืน มีดาวและพระจันทร์
+                g2.setColor(new Color(36, 55, 105));
+                g2.fillRect(0, 0, w, h);
+                drawStars(g2, w, groundY);
+                drawMoon(g2, w - 125, 85);
+                drawCloud(g2, 120, 130, 0.8, new Color(97, 115, 153));
+                drawHills(g2, w, groundY, new Color(55, 92, 91), new Color(42, 77, 70));
+            }
+            case 4 -> {
+                // STORM - ม่วงเข้ม ดูยากขึ้น
+                GradientPaint storm = new GradientPaint(
+                    0, 0, new Color(82, 69, 116),
+                    0, groundY, new Color(131, 105, 139)
+                );
+                g2.setPaint(storm);
+                g2.fillRect(0, 0, w, h);
+                drawCloud(g2, 70, 85, 1.15, new Color(100, 95, 122));
+                drawCloud(g2, 430, 120, 1.05, new Color(88, 84, 110));
+                drawCloud(g2, 690, 70, 0.8, new Color(111, 103, 130));
+                drawLightning(g2, w - 160, 150);
+                drawHills(g2, w, groundY, new Color(70, 84, 79), new Color(51, 69, 61));
+            }
+            case 5 -> {
+                // FINAL - รุ่งเช้า / บรรยากาศอบอุ่นก่อนเข้ารัง
+                GradientPaint dawn = new GradientPaint(
+                    0, 0, new Color(119, 201, 231),
+                    0, groundY, new Color(255, 224, 173)
+                );
+                g2.setPaint(dawn);
+                g2.fillRect(0, 0, w, h);
+                drawSun(g2, w / 2 + 170, 95, new Color(255, 230, 126));
+                drawCloud(g2, 95, 125, 0.95, new Color(255, 248, 229));
+                drawCloud(g2, 570, 155, 0.8, new Color(255, 248, 229));
+                drawHills(g2, w, groundY, new Color(111, 176, 111), new Color(73, 149, 90));
+            }
+            default -> {
+                g2.setColor(new Color(160, 220, 255));
+                g2.fillRect(0, 0, w, h);
+            }
+        }
+
+        g2.dispose();
+    }
+
+    private void drawLevelGround(Graphics g, int w, int h, int level) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        int y = h - CollisionService.GROUND_HEIGHT;
+
+        Color top;
+        Color bottom;
+
+        switch (level) {
+            case 1 -> { top = new Color(85, 194, 91); bottom = new Color(55, 157, 72); }
+            case 2 -> { top = new Color(164, 175, 82); bottom = new Color(126, 141, 72); }
+            case 3 -> { top = new Color(55, 118, 76); bottom = new Color(38, 87, 61); }
+            case 4 -> { top = new Color(68, 105, 72); bottom = new Color(46, 77, 57); }
+            case 5 -> { top = new Color(95, 184, 94); bottom = new Color(63, 145, 78); }
+            default -> { top = new Color(80, 180, 90); bottom = new Color(55, 145, 70); }
+        }
+
+        g2.setColor(top);
+        g2.fillRect(0, y, w, CollisionService.GROUND_HEIGHT);
+
+        g2.setColor(bottom);
+        g2.fillRect(0, y + 18, w, CollisionService.GROUND_HEIGHT - 18);
+
+        // เส้นหญ้าเล็ก ๆ ให้ดูเป็นธีมเกมมากขึ้น
+        g2.setColor(top.brighter());
+        for (int x = 0; x < w; x += 28) {
+            g2.drawLine(x, y + 16, x + 8, y + 4);
+            g2.drawLine(x + 8, y + 4, x + 15, y + 16);
+        }
+
+        g2.dispose();
+    }
+
+    private void drawSun(Graphics2D g2, int x, int y, Color color) {
+        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 55));
+        g2.fillOval(x - 18, y - 18, 86, 86);
+        g2.setColor(color);
+        g2.fillOval(x, y, 50, 50);
+    }
+
+    private void drawMoon(Graphics2D g2, int x, int y) {
+        g2.setColor(new Color(255, 246, 195));
+        g2.fillOval(x, y, 58, 58);
+        g2.setColor(new Color(36, 55, 105));
+        g2.fillOval(x + 18, y - 5, 55, 55);
+    }
+
+    private void drawStars(Graphics2D g2, int w, int groundY) {
+        g2.setColor(new Color(255, 246, 190));
+        int[][] stars = {
+            {70, 70}, {145, 145}, {235, 82}, {330, 130}, {430, 65},
+            {520, 112}, {625, 72}, {715, 152}, {800, 92}, {385, 210}
+        };
+        for (int[] s : stars) {
+            if (s[0] < w && s[1] < groundY) {
+                g2.fillOval(s[0], s[1], 4, 4);
+            }
+        }
+    }
+
+    private void drawCloud(Graphics2D g2, int x, int y, double scale, Color color) {
+        int s = (int) (48 * scale);
+        g2.setColor(color);
+        g2.fillOval(x, y + s / 3, s, s / 2);
+        g2.fillOval(x + s / 3, y, s, s);
+        g2.fillOval(x + s, y + s / 4, s, (int) (s * 0.7));
+        g2.fillRoundRect(x + s / 4, y + s / 2, (int) (s * 1.6), s / 2, s / 3, s / 3);
+    }
+
+    private void drawHills(Graphics2D g2, int w, int groundY, Color back, Color front) {
+        g2.setColor(back);
+        for (int x = -80; x < w; x += 180) {
+            g2.fillOval(x, groundY - 115, 230, 150);
+        }
+        g2.setColor(front);
+        for (int x = -130; x < w; x += 210) {
+            g2.fillOval(x, groundY - 75, 260, 110);
+        }
+    }
+
+    private void drawLightning(Graphics2D g2, int x, int y) {
+        Polygon bolt = new Polygon();
+        bolt.addPoint(x + 18, y);
+        bolt.addPoint(x, y + 46);
+        bolt.addPoint(x + 18, y + 43);
+        bolt.addPoint(x + 4, y + 88);
+        bolt.addPoint(x + 52, y + 30);
+        bolt.addPoint(x + 31, y + 34);
+        bolt.addPoint(x + 45, y);
+        g2.setColor(new Color(255, 235, 112));
+        g2.fillPolygon(bolt);
     }
 
     private void drawReadyOverlay(Graphics g, int w, int h) {
